@@ -28,3 +28,7 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Billing
+- Keep the item-line limit in a shared browser-safe module and enforce it in the cart and checkout so entry paths cannot bypass it.
+- Render PDF item rows with AutoTable pagination so long bills never silently omit items.
