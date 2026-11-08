@@ -213,6 +213,8 @@ export function printA4(sale: Sale, s: Settings) {
 
 export function thermalHtml(sale: Sale, s: Settings) {
   const paperWidth = s.thermalWidth === 58 ? 58 : 80;
+  // Thermal heads print ~72mm on 80mm rolls (~48mm on 58mm) — keep content inside it.
+  const printWidth = paperWidth === 58 ? 48 : 72;
   const dash = `<div class="d"></div>`;
   const totalQty = sale.items.reduce((a, i) => a + i.qty, 0);
   // GST slab summary
@@ -234,7 +236,8 @@ export function thermalHtml(sale: Sale, s: Settings) {
     `<tr class="${cls}"><td>${k}</td><td class="c" style="width:12px">:</td><td class="r">${v}</td></tr>`;
   return `<html><head><title>${sale.invoiceNo}</title><style>
   @page{size:${paperWidth}mm auto;margin:0}
-  body{font-family:Arial,Helvetica,sans-serif;font-size:12px;box-sizing:border-box;width:${paperWidth}mm;max-width:100%;margin:0 auto;padding:2mm;color:#000}
+  html,body{margin:0;padding:0}
+  body{font-family:Arial,Helvetica,sans-serif;font-size:12px;box-sizing:border-box;width:${printWidth}mm;max-width:100%;margin:0 auto;padding:1mm 0;color:#000}
   td{overflow-wrap:anywhere}
   .c{text-align:center}.r{text-align:right}.b{font-weight:700}
   .d{border-top:1px dashed #000;margin:4px 0}.s{border-top:1.5px solid #000;margin:3px 0}
@@ -290,7 +293,31 @@ export function thermalHtml(sale: Sale, s: Settings) {
   </body></html>`;
 }
 
+function isEmbedded() {
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+}
+
 export function printThermal(sale: Sale, s: Settings) {
+  // Embedded previews (e.g. the editor) often block print() inside frames,
+  // so print from a small receipt window there instead.
+  if (isEmbedded()) {
+    const w = window.open("", "_blank", "width=420,height=700");
+    if (w) {
+      w.document.open();
+      w.document.write(
+        thermalHtml(sale, s).replace(
+          "</body>",
+          `<script>window.onload=function(){window.focus();window.print();};window.onafterprint=function(){window.close();};</script></body>`,
+        ),
+      );
+      w.document.close();
+      return;
+    }
+  }
   // A same-origin frame avoids popup blockers and keeps the bill screen open.
   const frame = document.createElement("iframe");
   frame.setAttribute("data-thermal-print", "true");
