@@ -32,4 +32,4 @@ use the editor.
 ## Billing
 - Keep the item-line limit in a shared browser-safe module and enforce it in the cart and checkout so entry paths cannot bypass it.
 - Render PDF item rows with AutoTable pagination so long bills never silently omit items.
-- Thermal printing uses a same-origin receipt iframe and the browser print dialog, avoiding popup blockers without requiring local printer services.
+- Thermal printing uses a same-origin receipt iframe and the browser print dialog, avoiding popup blockers without requiring local printer services; when the app is itself embedded in a frame (editor preview), it prints from a small receipt window because framed print() is often blocked.
