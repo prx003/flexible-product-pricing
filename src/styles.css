@@ -175,3 +175,12 @@
     border-radius: 8px;
   }
 }
+
+.thermal-print-frame {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 80mm;
+  height: 1px;
+  border: 0;
+}
