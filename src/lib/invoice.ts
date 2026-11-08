@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { toast } from "sonner";
 import type { Sale, Settings } from "./types";
 import { fmtDateTime, inr } from "./format";
 import { gkLogoDataUrl } from "./gk-logo";
@@ -211,7 +212,7 @@ export function printA4(sale: Sale, s: Settings) {
 }
 
 export function thermalHtml(sale: Sale, s: Settings) {
-  const w = s.thermalWidth === 58 ? 220 : 300;
+  const paperWidth = s.thermalWidth === 58 ? 58 : 80;
   const dash = `<div class="d"></div>`;
   const totalQty = sale.items.reduce((a, i) => a + i.qty, 0);
   // GST slab summary
@@ -232,8 +233,9 @@ export function thermalHtml(sale: Sale, s: Settings) {
   const kv = (k: string, v: string, cls = "") =>
     `<tr class="${cls}"><td>${k}</td><td class="c" style="width:12px">:</td><td class="r">${v}</td></tr>`;
   return `<html><head><title>${sale.invoiceNo}</title><style>
-  @page{margin:0}
-  body{font-family:Arial,Helvetica,sans-serif;font-size:12px;width:${w}px;margin:0 auto;padding:8px;color:#000}
+  @page{size:${paperWidth}mm auto;margin:0}
+  body{font-family:Arial,Helvetica,sans-serif;font-size:12px;box-sizing:border-box;width:${paperWidth}mm;max-width:100%;margin:0 auto;padding:2mm;color:#000}
+  td{overflow-wrap:anywhere}
   .c{text-align:center}.r{text-align:right}.b{font-weight:700}
   .d{border-top:1px dashed #000;margin:4px 0}.s{border-top:1.5px solid #000;margin:3px 0}
   table{width:100%;border-collapse:collapse}td,th{font-size:11px;padding:1px 0;vertical-align:top}
@@ -285,15 +287,34 @@ export function thermalHtml(sale: Sale, s: Settings) {
   <div class="c b" style="font-size:13px;margin-top:8px">*** ${s.wishes || "THANK YOU &nbsp;VISIT AGAIN"} ***</div>
   ${s.footerNote ? `<div class="c" style="font-size:10px">${s.footerNote}</div>` : ""}
   ${dash}
-  <script>window.onload=function(){window.print()}<\/script>
   </body></html>`;
 }
 
 export function printThermal(sale: Sale, s: Settings) {
-  const win = window.open("", "_blank", "width=400,height=700");
-  if (!win) return;
-  win.document.write(thermalHtml(sale, s));
-  win.document.close();
+  // A same-origin frame avoids popup blockers and keeps the bill screen open.
+  const frame = document.createElement("iframe");
+  frame.dataset.thermalPrint = "true";
+  frame.title = `Print receipt ${sale.invoiceNo}`;
+  frame.setAttribute("aria-hidden", "true");
+  frame.className = "thermal-print-frame";
+  frame.onload = () => {
+    const win = frame.contentWindow;
+    if (!win) {
+      frame.remove();
+      toast.error("Unable to open receipt printing. Please try again.");
+      return;
+    }
+    win.addEventListener("afterprint", () => frame.remove(), { once: true });
+    try {
+      win.focus();
+      win.print();
+    } catch {
+      frame.remove();
+      toast.error("Printing is unavailable in this browser. Please try Chrome or Edge.");
+    }
+  };
+  frame.srcdoc = thermalHtml(sale, s);
+  document.body.appendChild(frame);
 }
 
 export function whatsappShare(sale: Sale, s: Settings) {
