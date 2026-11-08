@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { printThermal } from "@/lib/invoice";
+import { printThermal, thermalHtml } from "@/lib/invoice";
 import type { Sale, Settings } from "@/lib/types";
 
 const sale = {
@@ -14,6 +14,12 @@ afterEach(() => {
 });
 
 describe("thermal receipt printing", () => {
+  it("sizes the 80mm receipt page and keeps content in the 72mm print area", () => {
+    const html = thermalHtml(sale, settings);
+    expect(html).toContain("size:80mm auto");
+    expect(html).toContain("width:72mm");
+  });
+
   it("prints without opening a popup window", () => {
     const popup = vi.spyOn(window, "open").mockReturnValue(null);
     printThermal(sale, settings);
