@@ -293,7 +293,7 @@ export function thermalHtml(sale: Sale, s: Settings) {
 export function printThermal(sale: Sale, s: Settings) {
   // A same-origin frame avoids popup blockers and keeps the bill screen open.
   const frame = document.createElement("iframe");
-  frame.dataset.thermalPrint = "true";
+  frame.setAttribute("data-thermal-print", "true");
   frame.title = `Print receipt ${sale.invoiceNo}`;
   frame.setAttribute("aria-hidden", "true");
   frame.className = "thermal-print-frame";
