@@ -235,7 +235,7 @@ export function thermalHtml(sale: Sale, s: Settings) {
   const kv = (k: string, v: string, cls = "") =>
     `<tr class="${cls}"><td>${k}</td><td class="c" style="width:12px">:</td><td class="r">${v}</td></tr>`;
   return `<html><head><title>${sale.invoiceNo}</title><style>
-  @page{size:${paperWidth}mm auto;margin:0}
+  @page{size:${paperWidth}mm 297mm;margin:0}
   html,body{margin:0;padding:0}
   body{font-family:Arial,Helvetica,sans-serif;font-size:12px;box-sizing:border-box;width:${printWidth}mm;max-width:100%;margin:0 auto;padding:1mm 0;color:#000}
   td{overflow-wrap:anywhere}
@@ -244,7 +244,7 @@ export function thermalHtml(sale: Sale, s: Settings) {
   table{width:100%;border-collapse:collapse}td,th{font-size:11px;padding:1px 0;vertical-align:top}
   th{text-align:right;font-size:12px}th:first-child{text-align:left}
   .big td{font-size:17px;font-weight:700;padding:3px 0}
-  </style></head><body>
+  </style><style id="page-size"></style></head><body data-paper="${paperWidth}">
   ${dash}
   <div class="c b" style="font-size:17px">${s.shopName.toUpperCase()}</div>
   <div class="c b">${s.address}</div>
@@ -301,40 +301,45 @@ function isEmbedded() {
   }
 }
 
+/** Shrinks the printed page to the receipt's real length so the roll does not feed a full A4 sheet. */
+export function fitReceiptPage(win: Window) {
+  const doc = win.document;
+  const paper = doc.body?.dataset.paper || "80";
+  const heightMm = Math.ceil(((doc.body?.scrollHeight || 1000) * 25.4) / 96) + 6;
+  const tag = doc.getElementById("page-size");
+  if (tag) tag.textContent = `@page{size:${paper}mm ${heightMm}mm;margin:0}`;
+}
+
+function printInWindow(sale: Sale, s: Settings) {
+  const w = window.open("", "_blank", "width=420,height=700");
+  if (!w) return false;
+  w.document.open();
+  w.document.write(thermalHtml(sale, s));
+  w.document.close();
+  // Print from the opener once the receipt has laid out; relying on the
+  // popup's own onload is unreliable after document.write.
+  setTimeout(() => {
+    try {
+      fitReceiptPage(w);
+      w.focus();
+      w.print();
+    } catch {
+      toast.error("Printing failed. Please try again.");
+    }
+    setTimeout(() => w.close(), 500);
+  }, 300);
+  return true;
+}
+
 /** Opens the 80mm receipt in its own window and shows the Windows print dialog. */
 export function printWindows(sale: Sale, s: Settings) {
-  const w = window.open("", "_blank", "width=420,height=700");
-  if (!w) {
-    toast.error("Please allow popups to use Windows Print.");
-    return;
-  }
-  w.document.open();
-  w.document.write(
-    thermalHtml(sale, s).replace(
-      "</body>",
-      `<script>window.onload=function(){window.focus();window.print();};window.onafterprint=function(){window.close();};</script></body>`,
-    ),
-  );
-  w.document.close();
+  if (!printInWindow(sale, s)) toast.error("Please allow popups to use Windows Print.");
 }
 
 export function printThermal(sale: Sale, s: Settings) {
   // Embedded previews (e.g. the editor) often block print() inside frames,
   // so print from a small receipt window there instead.
-  if (isEmbedded()) {
-    const w = window.open("", "_blank", "width=420,height=700");
-    if (w) {
-      w.document.open();
-      w.document.write(
-        thermalHtml(sale, s).replace(
-          "</body>",
-          `<script>window.onload=function(){window.focus();window.print();};window.onafterprint=function(){window.close();};</script></body>`,
-        ),
-      );
-      w.document.close();
-      return;
-    }
-  }
+  if (isEmbedded() && printInWindow(sale, s)) return;
   // A same-origin frame avoids popup blockers and keeps the bill screen open.
   const frame = document.createElement("iframe");
   frame.setAttribute("data-thermal-print", "true");
@@ -350,6 +355,7 @@ export function printThermal(sale: Sale, s: Settings) {
     }
     win.addEventListener("afterprint", () => frame.remove(), { once: true });
     try {
+      fitReceiptPage(win);
       win.focus();
       win.print();
     } catch {
