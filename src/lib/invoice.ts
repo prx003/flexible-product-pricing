@@ -304,7 +304,7 @@ function isEmbedded() {
 /** Shrinks the printed page to the receipt's real length so the roll does not feed a full A4 sheet. */
 export function fitReceiptPage(win: Window) {
   const doc = win.document;
-  const paper = doc.body?.dataset.paper || "80";
+  const paper = doc.body?.dataset["paper"] || "80";
   const heightMm = Math.ceil(((doc.body?.scrollHeight || 1000) * 25.4) / 96) + 6;
   const tag = doc.getElementById("page-size");
   if (tag) tag.textContent = `@page{size:${paper}mm ${heightMm}mm;margin:0}`;
