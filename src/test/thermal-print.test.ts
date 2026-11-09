@@ -16,7 +16,8 @@ afterEach(() => {
 describe("thermal receipt printing", () => {
   it("sizes the 80mm receipt page and keeps content in the 72mm print area", () => {
     const html = thermalHtml(sale, settings);
-    expect(html).toContain("size:80mm auto");
+    expect(html).toContain("size:80mm 297mm");
+    expect(html).toContain('data-paper="80"');
     expect(html).toContain("width:72mm");
   });
 
