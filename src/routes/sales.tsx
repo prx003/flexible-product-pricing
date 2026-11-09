@@ -30,7 +30,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { EmptyState, Loader } from "@/components/common/states";
 import { Pagination, usePagination } from "@/components/common/pagination";
 import { exportExcel } from "@/lib/excel";
-import { downloadInvoice, printA4, printThermal, whatsappShare } from "@/lib/invoice";
+import { downloadInvoice, printA4, printThermal, printWindows, whatsappShare } from "@/lib/invoice";
 import { fmtDateTime, inr, toInputDate } from "@/lib/format";
 import type { Sale } from "@/lib/types";
 import { ReceiptText, IndianRupee, TrendingUp } from "lucide-react";
@@ -226,6 +226,9 @@ function SalesPage() {
             </Button>
             <Button variant="outline" onClick={() => view && printThermal(view, settings)}>
               <Printer className="size-4" /> Thermal
+            </Button>
+            <Button variant="outline" onClick={() => view && printWindows(view, settings)}>
+              <Printer className="size-4" /> Windows Print
             </Button>
             <Button variant="outline" onClick={() => view && whatsappShare(view, settings)}>
               <MessageCircle className="size-4" /> WhatsApp
