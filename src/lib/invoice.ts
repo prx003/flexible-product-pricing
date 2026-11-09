@@ -301,6 +301,23 @@ function isEmbedded() {
   }
 }
 
+/** Opens the 80mm receipt in its own window and shows the Windows print dialog. */
+export function printWindows(sale: Sale, s: Settings) {
+  const w = window.open("", "_blank", "width=420,height=700");
+  if (!w) {
+    toast.error("Please allow popups to use Windows Print.");
+    return;
+  }
+  w.document.open();
+  w.document.write(
+    thermalHtml(sale, s).replace(
+      "</body>",
+      `<script>window.onload=function(){window.focus();window.print();};window.onafterprint=function(){window.close();};</script></body>`,
+    ),
+  );
+  w.document.close();
+}
+
 export function printThermal(sale: Sale, s: Settings) {
   // Embedded previews (e.g. the editor) often block print() inside frames,
   // so print from a small receipt window there instead.

@@ -24,7 +24,7 @@ import { db } from "@/lib/db";
 import { computeTotals, useCart } from "@/store/cart";
 import { useAuth } from "@/store/auth";
 import { completeSale, getSettings } from "@/lib/sales";
-import { downloadInvoice, printThermal } from "@/lib/invoice";
+import { downloadInvoice, printThermal, printWindows } from "@/lib/invoice";
 import { inr, round2 } from "@/lib/format";
 import type { Customer, PaymentMethod, Product, Sale, Settings } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -765,6 +765,9 @@ function PosPage() {
             <div className="mt-2 grid grid-cols-2 gap-2">
               <Button size="sm" variant="outline" onClick={() => printThermal(lastSale, settings)}>
                 <Printer className="size-4" /> Thermal
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => printWindows(lastSale, settings)}>
+                <Printer className="size-4" /> Windows Print
               </Button>
               <Button size="sm" variant="outline" onClick={() => downloadInvoice(lastSale, settings)}>
                 <Download className="size-4" /> PDF
